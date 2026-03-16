@@ -1,0 +1,318 @@
+/* FFmpeg TUI Tools - Dark Theme Stylesheet */
+
+Screen {
+    background: $surface;
+}
+
+Header {
+    dock: top;
+    background: $primary;
+    color: $text;
+}
+
+Footer {
+    dock: bottom;
+    background: $primary;
+    color: $text;
+}
+
+/* ---- Title / Subtitle ---- */
+
+.title {
+    text-align: center;
+    text-style: bold;
+    color: $accent;
+    width: 100%;
+    padding: 1 0;
+}
+
+.subtitle {
+    text-align: center;
+    color: $text-muted;
+    width: 100%;
+    padding: 0 0 1 0;
+}
+
+/* ---- Menu Container ---- */
+
+.menu-container {
+    align: center middle;
+    width: 100%;
+    height: auto;
+    padding: 1 2;
+}
+
+/* ---- Status Bar ---- */
+
+.status-bar {
+    dock: bottom;
+    height: 1;
+    background: $primary-darken-2;
+    color: $text-muted;
+    padding: 0 2;
+    text-align: center;
+}
+
+/* ---- Buttons ---- */
+
+Button {
+    width: 100%;
+    margin: 1 4;
+}
+
+Button:hover {
+    background: $primary-lighten-1;
+}
+
+Button:focus {
+    text-style: bold reverse;
+}
+
+/* ---- OptionList ---- */
+
+OptionList {
+    width: 60%;
+    height: auto;
+    max-height: 16;
+    margin: 1 0;
+    background: $surface-darken-1;
+    border: round $primary;
+    padding: 0 1;
+}
+
+OptionList:focus {
+    border: round $accent;
+}
+
+OptionList > .option-list--option-highlighted {
+    background: $primary;
+    color: $text;
+    text-style: bold;
+}
+
+OptionList > .option-list--option-hover {
+    background: $primary-darken-1;
+}
+
+/* ---- ProgressBar ---- */
+
+ProgressBar {
+    width: 80%;
+    margin: 1 4;
+}
+
+ProgressBar Bar {
+    color: $success;
+}
+
+/* ---- Input ---- */
+
+Input {
+    margin: 1 2;
+    border: tall $primary;
+}
+
+Input:focus {
+    border: tall $accent;
+}
+
+/* ---- Select / SelectionList ---- */
+
+Select {
+    margin: 1 2;
+    width: 100%;
+}
+
+SelectionList {
+    margin: 1 2;
+    width: 100%;
+    border: round $primary;
+}
+
+SelectionList:focus {
+    border: round $accent;
+}
+
+/* ---- Main Screen Layout ---- */
+
+#main-content {
+    align: center middle;
+    width: 100%;
+    height: 1fr;
+}
+
+#ascii-art {
+    text-align: center;
+    color: $accent;
+    width: 100%;
+    padding: 1 0 0 0;
+}
+
+#ffmpeg-status {
+    text-align: center;
+    color: $text-muted;
+    width: 100%;
+    padding: 0 0 1 0;
+}
+
+#menu-list {
+    width: 50;
+    height: auto;
+    max-height: 12;
+}
+
+/* ---- Settings Screen Layout ---- */
+
+#settings-container {
+    align: center middle;
+    width: 100%;
+    height: 1fr;
+    padding: 2 4;
+}
+
+#settings-form {
+    width: 80%;
+    max-width: 80;
+    height: auto;
+    border: round $primary;
+    padding: 1 2;
+    background: $surface-darken-1;
+}
+
+.settings-row {
+    layout: horizontal;
+    height: auto;
+    padding: 1 0;
+    width: 100%;
+}
+
+.settings-label {
+    width: 20;
+    padding: 1;
+    text-align: right;
+    color: $text-muted;
+    text-style: bold;
+}
+
+.settings-value {
+    width: 1fr;
+    padding: 1;
+    color: $text;
+}
+
+#settings-buttons {
+    layout: horizontal;
+    align: center middle;
+    height: auto;
+    width: 100%;
+    padding: 1 0;
+}
+
+#settings-buttons Button {
+    width: auto;
+    min-width: 20;
+    margin: 0 2;
+}
+
+/* ---- Convert Screen Layout ---- */
+
+#convert-container {
+    width: 100%;
+    height: 1fr;
+    padding: 1 4;
+    overflow-y: auto;
+}
+
+#convert-form {
+    width: 100%;
+    max-width: 100;
+    height: auto;
+    padding: 1 2;
+}
+
+.section-title {
+    text-style: bold;
+    color: $accent;
+    padding: 1 0 0 0;
+    width: 100%;
+}
+
+.file-info {
+    color: $text-muted;
+    padding: 0 1;
+    height: auto;
+    width: 100%;
+}
+
+/* ---- Compress Screen Layout ---- */
+
+#compress-container {
+    width: 100%;
+    height: 1fr;
+    padding: 1 4;
+    overflow-y: auto;
+}
+
+#file-section {
+    width: 100%;
+    max-width: 100;
+    height: auto;
+    padding: 1 2;
+}
+
+#input-file-info {
+    padding: 0 2;
+    height: auto;
+    color: $text-muted;
+}
+
+#estimate-info {
+    text-align: center;
+    color: $accent;
+    padding: 1 2;
+    width: 100%;
+}
+
+#compress-buttons {
+    layout: horizontal;
+    align: center middle;
+    height: auto;
+    width: 100%;
+    padding: 1 0;
+}
+
+#compress-buttons Button {
+    width: auto;
+    min-width: 20;
+    margin: 0 2;
+}
+
+#result-info {
+    padding: 1 2;
+    width: 100%;
+    height: auto;
+}
+
+/* ---- Parameter Panel ---- */
+
+#param-panel {
+    width: 100%;
+    max-width: 100;
+    height: auto;
+    border: round $primary;
+    padding: 1 2;
+    margin: 1 0;
+    background: $surface-darken-1;
+}
+
+.param-row {
+    height: auto;
+    width: 100%;
+    padding: 0 0 1 0;
+}
+
+.param-row Label {
+    padding: 0 1;
+    color: $text-muted;
+    text-style: bold;
+}
