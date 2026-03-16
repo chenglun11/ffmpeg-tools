@@ -10,7 +10,7 @@ import httpx
 
 from ffmpeg_tui import __version__
 
-_GITHUB_API_URL = "https://api.github.com/repos/OWNER/REPO/releases/latest"
+_GITHUB_API_URL = "https://api.github.com/repos/chenglun11/ffmpeg-tools/releases/latest"
 
 
 @dataclass
