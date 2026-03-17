@@ -11,6 +11,7 @@ import httpx
 from ffmpeg_tui import __version__
 
 _GITHUB_API_URL = "https://api.github.com/repos/chenglun11/ffmpeg-tools/releases/latest"
+_USER_AGENT = "ffmpeg-tools-updater"
 
 
 @dataclass
@@ -31,21 +32,33 @@ def _parse_version(v: str) -> tuple[int, ...]:
 
 
 class UpdateChecker:
-    def check_update(self) -> Optional[UpdateInfo]:
-        """Check GitHub for a newer release. Returns UpdateInfo if available, else None."""
-        resp = httpx.get(_GITHUB_API_URL, timeout=10, follow_redirects=True)
+    def check_update(self) -> UpdateInfo:
+        """Check GitHub for a newer release. Always returns UpdateInfo.
+
+        If no newer version, latest_version == current_version.
+        Raises on network/parse errors.
+        """
+        resp = httpx.get(
+            _GITHUB_API_URL,
+            timeout=10,
+            follow_redirects=True,
+            headers={"User-Agent": _USER_AGENT},
+        )
         resp.raise_for_status()
         data = resp.json()
 
         tag = data.get("tag_name", "")
         if not tag:
-            return None
+            return UpdateInfo(
+                latest_version=__version__,
+                current_version=__version__,
+                download_url="",
+                release_notes="",
+                published_at="",
+            )
 
         latest = _parse_version(tag)
         current = _parse_version(__version__)
-
-        if latest <= current:
-            return None
 
         return UpdateInfo(
             latest_version=tag.lstrip("v"),

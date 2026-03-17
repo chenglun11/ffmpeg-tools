@@ -1,6 +1,7 @@
 """File picker widget: QLineEdit + Browse button + QFileDialog."""
 
 from pathlib import Path
+from typing import Optional
 
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
@@ -44,8 +45,9 @@ class FilePickerWidget(QWidget):
 
         self.setAcceptDrops(True)
 
-    def path(self) -> Path:
-        return Path(self._line_edit.text())
+    def path(self) -> Optional[Path]:
+        text = self._line_edit.text().strip()
+        return Path(text) if text else None
 
     def set_path(self, path: Path) -> None:
         self._line_edit.setText(str(path))
@@ -66,7 +68,10 @@ class FilePickerWidget(QWidget):
     # Drag & drop support
     def dragEnterEvent(self, event) -> None:
         if event.mimeData().hasUrls():
-            event.acceptProposedAction()
+            url = event.mimeData().urls()[0]
+            path = Path(url.toLocalFile())
+            if path.suffix.lower() in ALL_MEDIA_EXTENSIONS:
+                event.acceptProposedAction()
 
     def dropEvent(self, event) -> None:
         urls = event.mimeData().urls()

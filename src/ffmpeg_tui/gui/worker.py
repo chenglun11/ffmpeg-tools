@@ -102,16 +102,18 @@ class UpdateCheckWorker(QThread):
     """Check for application updates in a background thread.
 
     Signals:
-        finished(has_update, info)  — info is an UpdateInfo or None
+        finished(has_update, info)  — info is UpdateInfo or None (on error)
     """
 
     finished = pyqtSignal(bool, object)
 
     def run(self) -> None:
-        from ffmpeg_tui.gui.updater import UpdateChecker
+        from ffmpeg_tui.gui.updater import UpdateChecker, _parse_version
+        from ffmpeg_tui import __version__
 
         try:
             info = UpdateChecker().check_update()
-            self.finished.emit(info is not None, info)
+            has_update = _parse_version(info.latest_version) > _parse_version(__version__)
+            self.finished.emit(has_update, info)
         except Exception:
             self.finished.emit(False, None)

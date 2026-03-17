@@ -44,6 +44,7 @@ class CommandBuilder:
               [-r fps] [-preset preset] -y -progress pipe:1 output
         """
         cmd = [self.ffmpeg_path, "-i", str(input_file)]
+        cmd.extend(["-c:v", "libx264"])
         if resolution:
             w, h = resolution.split("x")
             cmd.extend(["-vf", f"scale={w}:{h}"])
@@ -53,7 +54,8 @@ class CommandBuilder:
             cmd.extend(["-b:a", audio_bitrate])
         if framerate:
             cmd.extend(["-r", str(framerate)])
-        cmd.extend(["-preset", preset])
+        if preset:
+            cmd.extend(["-preset", preset])
         cmd.extend(["-y", "-progress", "pipe:1", str(output_file)])
         return cmd
 

@@ -3,10 +3,11 @@ import subprocess
 from pathlib import Path
 
 MEDIA_EXTENSIONS = {
-    "video": {".mp4", ".avi", ".mkv", ".mov", ".flv", ".wmv", ".webm"},
-    "audio": {".mp3", ".wav", ".aac", ".flac", ".ogg", ".m4a"},
+    "video": {".mp4", ".avi", ".mkv", ".mov", ".flv", ".wmv", ".webm", ".3gp"},
+    "audio": {".mp3", ".wav", ".aac", ".flac", ".ogg", ".m4a", ".amr"},
+    "image": {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tiff"},
 }
-ALL_MEDIA_EXTENSIONS = MEDIA_EXTENSIONS["video"] | MEDIA_EXTENSIONS["audio"]
+ALL_MEDIA_EXTENSIONS = MEDIA_EXTENSIONS["video"] | MEDIA_EXTENSIONS["audio"] | MEDIA_EXTENSIONS["image"]
 
 def is_media_file(path: Path) -> bool:
     """判断文件是否是支持的媒体文件"""
@@ -20,6 +21,8 @@ def is_audio_file(path: Path) -> bool:
 
 def format_file_size(size_bytes: int) -> str:
     """格式化文件大小为人类可读格式"""
+    if size_bytes < 0:
+        return "0.0 B"
     for unit in ("B", "KB", "MB", "GB", "TB"):
         if abs(size_bytes) < 1024:
             return f"{size_bytes:.1f} {unit}"
@@ -28,6 +31,7 @@ def format_file_size(size_bytes: int) -> str:
 
 def format_duration(seconds: float) -> str:
     """格式化时长为 HH:MM:SS 格式"""
+    seconds = max(0.0, seconds)
     hours = int(seconds // 3600)
     minutes = int((seconds % 3600) // 60)
     secs = int(seconds % 60)

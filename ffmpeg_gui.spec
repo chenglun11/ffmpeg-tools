@@ -4,7 +4,6 @@
 import os
 import platform
 
-block_cipher = None
 app_version = os.environ.get("APP_VERSION", "0.1.0")
 
 a = Analysis(
@@ -32,10 +31,9 @@ a = Analysis(
         "mypy",
     ],
     noarchive=False,
-    cipher=block_cipher,
 )
 
-pyz = PYZ(a.pure, cipher=block_cipher)
+pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,
@@ -58,7 +56,7 @@ if platform.system() == "Darwin":
         exe,
         name="FFmpegTools.app",
         icon=None,
-        bundle_identifier="com.ffmpeg-tui.gui",
+        bundle_identifier="com.ffmpegTui.gui",
         info_plist={
             "CFBundleShortVersionString": app_version,
             "NSHighResolutionCapable": True,

@@ -39,6 +39,8 @@ class ConvertTab(QWidget):
         self._duration: float = 0.0
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
 
         # File picker
         self._file_picker = FilePickerWidget("输入文件:")
@@ -62,7 +64,8 @@ class ConvertTab(QWidget):
 
         # Start button
         self._start_btn = QPushButton("开始转换")
-        self._start_btn.setMinimumHeight(36)
+        self._start_btn.setObjectName("primaryBtn")
+        self._start_btn.setMinimumHeight(40)
         layout.addWidget(self._start_btn)
 
         # Progress
@@ -120,12 +123,20 @@ class ConvertTab(QWidget):
             QMessageBox.warning(self, "提示", "请指定输出路径")
             return
 
+        output_path = Path(output_text)
+        if output_path.exists():
+            reply = QMessageBox.question(
+                self, "确认覆盖",
+                f"输出文件已存在:\n{output_path.name}\n\n是否覆盖？",
+            )
+            if reply != QMessageBox.StandardButton.Yes:
+                return
+
         ffmpeg_path = self._manager.get_ffmpeg_path()
         if not ffmpeg_path:
             QMessageBox.critical(self, "错误", "未找到 FFmpeg，请在设置中安装")
             return
 
-        output_path = Path(output_text)
         _, format_info = self._format_selector.selected_format()
 
         builder = CommandBuilder(str(ffmpeg_path))
@@ -143,16 +154,18 @@ class ConvertTab(QWidget):
         self._worker.progress.connect(self._progress.update_progress)
         self._worker.finished.connect(self._on_finished)
         self._worker.error.connect(self._on_error)
+        self._worker.finished.connect(self._worker.deleteLater)
         self._worker.start()
 
     def _cancel(self) -> None:
         if self._worker:
             self._worker.cancel()
-            self._progress.set_cancelled()
-            self._start_btn.setEnabled(True)
 
     def _on_finished(self, success: bool) -> None:
         self._start_btn.setEnabled(True)
+        if not success and self._worker and self._worker._executor._cancelled:
+            self._progress.set_cancelled()
+            return
         if success:
             output = Path(self._output_edit.text())
             if output.exists():

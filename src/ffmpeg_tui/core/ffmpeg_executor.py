@@ -87,10 +87,11 @@ class FFmpegExecutor:
                 ],
                 capture_output=True,
                 text=True,
+                timeout=10,
             )
             if result.returncode == 0:
                 data = json.loads(result.stdout)
                 return float(data.get("format", {}).get("duration", 0))
-        except (json.JSONDecodeError, ValueError, FileNotFoundError):
+        except (json.JSONDecodeError, ValueError, FileNotFoundError, subprocess.TimeoutExpired):
             pass
         return 0.0

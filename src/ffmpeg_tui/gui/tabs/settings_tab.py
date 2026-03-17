@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from PyQt6.QtCore import QUrl, pyqtSignal
+from PyQt6.QtCore import Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
     QFormLayout,
@@ -33,6 +33,8 @@ class SettingsTab(QWidget):
         self._update_worker: Optional[UpdateCheckWorker] = None
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
 
         # FFmpeg info group
         group = QGroupBox("FFmpeg 状态")
@@ -42,10 +44,15 @@ class SettingsTab(QWidget):
         form.addRow("安装状态:", self._status_label)
 
         self._path_label = QLabel()
+        self._path_label.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+        )
         form.addRow("路径:", self._path_label)
 
         self._version_label = QLabel()
-        self._version_label.setWordWrap(True)
+        self._version_label.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+        )
         form.addRow("版本:", self._version_label)
 
         layout.addWidget(group)
@@ -54,6 +61,7 @@ class SettingsTab(QWidget):
         btn_row = QHBoxLayout()
         self._detect_btn = QPushButton("重新检测")
         self._download_btn = QPushButton("下载安装 FFmpeg")
+        self._download_btn.setObjectName("primaryBtn")
         btn_row.addWidget(self._detect_btn)
         btn_row.addWidget(self._download_btn)
         btn_row.addStretch()
@@ -89,6 +97,7 @@ class SettingsTab(QWidget):
         update_btn_row = QHBoxLayout()
         self._check_update_btn = QPushButton("检查更新")
         self._goto_download_btn = QPushButton("前往下载")
+        self._goto_download_btn.setObjectName("successBtn")
         self._goto_download_btn.hide()
         update_btn_row.addWidget(self._check_update_btn)
         update_btn_row.addWidget(self._goto_download_btn)
@@ -116,9 +125,13 @@ class SettingsTab(QWidget):
             self._status_label.setText("已安装")
             self._status_label.setStyleSheet("color: green; font-weight: bold;")
             path = self._manager.get_ffmpeg_path()
-            self._path_label.setText(str(path) if path else "-")
-            version = self._manager.get_version()
-            self._version_label.setText(version or "-")
+            path_str = str(path) if path else "-"
+            self._path_label.setText(path_str)
+            self._path_label.setToolTip(path_str)
+            version = self._manager.get_version() or "-"
+            first_line = version.split("\n")[0].strip()
+            self._version_label.setText(first_line)
+            self._version_label.setToolTip(version)
             self._download_btn.setEnabled(False)
         else:
             self._status_label.setText("未安装")
@@ -181,7 +194,12 @@ class SettingsTab(QWidget):
     def _on_update_result(self, has_update: bool, info: object) -> None:
         self._check_update_btn.setEnabled(True)
 
-        if has_update and info is not None:
+        if info is None:
+            # Network error or parse failure
+            self._latest_ver_label.setText("-")
+            self._update_status_label.setText("检查失败，请稍后重试")
+            self._update_status_label.setStyleSheet("color: red;")
+        elif has_update:
             self._latest_ver_label.setText(info.latest_version)
             self._update_status_label.setText("发现新版本!")
             self._update_status_label.setStyleSheet("color: green;")
@@ -190,11 +208,6 @@ class SettingsTab(QWidget):
             if info.release_notes:
                 self._release_notes_label.setText(info.release_notes[:500])
                 self._release_notes_label.show()
-        elif not has_update and info is None:
-            # Network error or parse failure
-            self._latest_ver_label.setText("-")
-            self._update_status_label.setText("检查失败，请稍后重试")
-            self._update_status_label.setStyleSheet("color: red;")
         else:
             self._latest_ver_label.setText(__version__)
             self._update_status_label.setText("已是最新版本")

@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-latest
+          - os: macos-14
             artifact: FFmpegTools-macos-arm64
             ext: zip
           - os: macos-13
@@ -38,6 +38,12 @@ jobs:
       - name: Extract version from tag
         shell: bash
         run: echo "APP_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Install Linux Qt dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxcb-xinerama0 libxcb-cursor0 libegl1 libxkbcommon0
 
       - name: Install dependencies
         run: pip install -e ".[gui]" pyinstaller
