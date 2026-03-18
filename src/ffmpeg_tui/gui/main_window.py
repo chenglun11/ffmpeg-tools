@@ -189,8 +189,10 @@ class MainWindow(QMainWindow):
 
         # Connect settings tab signal to refresh status
         self._settings_tab.ffmpeg_status_changed.connect(self._update_status)
+        self._settings_tab.ffmpeg_status_changed.connect(self._update_tabs_state)
 
         self._update_status()
+        self._update_tabs_state()
         self._silent_update_check()
 
     def _update_status(self) -> None:
@@ -199,7 +201,17 @@ class MainWindow(QMainWindow):
             first_line = version.split("\n")[0] if version else "unknown"
             self._status_bar.showMessage(f"FFmpeg: {first_line}")
         else:
-            self._status_bar.showMessage("FFmpeg: 未安装")
+            self._status_bar.showMessage("FFmpeg: 未安装 — 请前往设置页安装")
+
+    def _update_tabs_state(self) -> None:
+        """Enable/disable tabs based on FFmpeg installation status."""
+        installed = self._manager.check_installation()
+        for tab in (self._convert_tab, self._compress_tab, self._meta_tab):
+            start_btn = getattr(tab, "_start_btn", None)
+            if start_btn:
+                start_btn.setEnabled(installed)
+                if not installed:
+                    start_btn.setToolTip("请先在设置页安装 FFmpeg")
 
     def _silent_update_check(self) -> None:
         self._update_worker = UpdateCheckWorker()
