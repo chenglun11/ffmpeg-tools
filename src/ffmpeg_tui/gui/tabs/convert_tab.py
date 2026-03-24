@@ -16,7 +16,6 @@ from PyQt6.QtWidgets import (
 from ffmpeg_tui.core.command_builder import CommandBuilder
 from ffmpeg_tui.core.ffmpeg_executor import FFmpegExecutor
 from ffmpeg_tui.core.ffmpeg_manager import FFmpegManager
-from ffmpeg_tui.models.format_config import FormatInfo
 from ffmpeg_tui.utils.file_utils import (
     format_duration,
     format_file_size,
@@ -105,11 +104,11 @@ class ConvertTab(QWidget):
         self._file_info_label.setStyleSheet("")
 
         # Auto-generate output path
-        ext, _ = self._format_selector.selected_format()
+        ext, _, _ = self._format_selector.selected_format()
         if ext:
             self._output_edit.setText(str(generate_output_path(path, ext)))
 
-    def _on_format_changed(self, ext: str, info: FormatInfo) -> None:
+    def _on_format_changed(self, ext: str, video_codec, audio_codec) -> None:
         if self._input_path and ext:
             self._output_edit.setText(str(generate_output_path(self._input_path, ext)))
 
@@ -137,14 +136,14 @@ class ConvertTab(QWidget):
             QMessageBox.critical(self, "错误", "未找到 FFmpeg，请在设置中安装")
             return
 
-        _, format_info = self._format_selector.selected_format()
+        ext, video_codec, audio_codec = self._format_selector.selected_format()
 
         builder = CommandBuilder(str(ffmpeg_path))
         command = builder.build_convert_command(
             self._input_path,
             output_path,
-            video_codec=format_info.default_video_codec,
-            audio_codec=format_info.default_audio_codec,
+            video_codec=video_codec,
+            audio_codec=audio_codec,
         )
 
         self._start_btn.setEnabled(False)

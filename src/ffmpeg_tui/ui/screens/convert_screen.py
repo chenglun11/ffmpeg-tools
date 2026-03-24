@@ -13,7 +13,7 @@ from ffmpeg_tui.core.ffmpeg_executor import FFmpegExecutor
 from ffmpeg_tui.core.ffmpeg_manager import FFmpegManager
 from ffmpeg_tui.core.progress_parser import ProgressInfo
 from ffmpeg_tui.ui.widgets.file_picker import FilePicker
-from ffmpeg_tui.ui.widgets.format_selector import FormatSelector, get_format_info, is_audio_only
+from ffmpeg_tui.ui.widgets.format_selector import FormatSelector
 from ffmpeg_tui.ui.widgets.progress_display import ProgressDisplay
 from ffmpeg_tui.utils.file_utils import (
     generate_output_path,
@@ -89,6 +89,8 @@ class ConvertScreen(Screen):
         self._manager = FFmpegManager()
         self._executor = FFmpegExecutor()
         self._selected_format: str | None = None
+        self._selected_video_codec: str | None = None
+        self._selected_audio_codec: str | None = None
         self._input_path: Path | None = None
         self._total_duration: float = 0.0
 
@@ -159,7 +161,9 @@ class ConvertScreen(Screen):
     def _on_format_changed(self, event: FormatSelector.FormatChanged) -> None:
         """Handle format selection change."""
         event.stop()
-        self._selected_format = event.format_value
+        self._selected_format = event.extension
+        self._selected_video_codec = event.video_codec
+        self._selected_audio_codec = event.audio_codec
         self._auto_generate_output()
         self._update_start_button()
 
@@ -233,7 +237,6 @@ class ConvertScreen(Screen):
 
         input_path = self._input_path
         output_path = Path(self.query_one("#output-path", Input).value.strip())
-        format_info = get_format_info(self._selected_format)
 
         ffmpeg_path = self._manager.get_ffmpeg_path()
         if not ffmpeg_path:
@@ -243,13 +246,9 @@ class ConvertScreen(Screen):
 
         builder = CommandBuilder(str(ffmpeg_path))
 
-        # Determine codecs based on format
-        video_codec = format_info.default_video_codec if format_info else None
-        audio_codec = format_info.default_audio_codec if format_info else None
-
-        # For audio-only formats, skip video codec
-        if self._selected_format and is_audio_only(self._selected_format):
-            video_codec = None
+        # Use stored codec selections
+        video_codec = self._selected_video_codec
+        audio_codec = self._selected_audio_codec
 
         command = builder.build_convert_command(
             input_file=input_path,
