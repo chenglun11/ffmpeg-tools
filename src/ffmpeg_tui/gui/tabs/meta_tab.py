@@ -18,13 +18,14 @@ from PyQt6.QtWidgets import (
 from ffmpeg_tui.core.ffmpeg_executor import FFmpegExecutor
 from ffmpeg_tui.core.ffmpeg_manager import FFmpegManager
 from ffmpeg_tui.utils.file_utils import (
-    format_duration,
     format_file_size,
     generate_output_path,
+    probe_media_streams,
     validate_input_file,
 )
 
 from ..widgets.file_picker import FilePickerWidget
+from ..widgets.media_info import MediaInfoWidget
 from ..widgets.progress_panel import ProgressPanelWidget
 from ..worker import FFmpegWorker
 
@@ -118,9 +119,9 @@ class MetaTab(QWidget):
         self._file_picker = FilePickerWidget("输入文件:")
         layout.addWidget(self._file_picker)
 
-        # File info
-        self._file_info_label = QLabel()
-        layout.addWidget(self._file_info_label)
+        # Media info
+        self._media_info = MediaInfoWidget()
+        layout.addWidget(self._media_info)
 
         # Media type selector
         type_group = QGroupBox("目标格式")
@@ -242,9 +243,9 @@ class MetaTab(QWidget):
     def _on_file_selected(self, path: Path) -> None:
         valid, msg = validate_input_file(path)
         if not valid:
-            self._file_info_label.setText(msg)
-            self._file_info_label.setStyleSheet("color: red;")
+            self._media_info.clear()
             self._input_path = None
+            QMessageBox.warning(self, "文件无效", msg)
             return
 
         self._input_path = path
@@ -254,11 +255,8 @@ class MetaTab(QWidget):
         probe_str = str(ffprobe) if ffprobe else "ffprobe"
         self._duration = FFmpegExecutor.get_duration(path, probe_str)
 
-        info_parts = [path.name, format_file_size(size)]
-        if self._duration > 0:
-            info_parts.append(format_duration(self._duration))
-        self._file_info_label.setText("  |  ".join(info_parts))
-        self._file_info_label.setStyleSheet("")
+        probe = probe_media_streams(path, probe_str)
+        self._media_info.update_info(probe, file_size=size)
 
         t = self._current_type()
         self._output_edit.setText(

@@ -11,6 +11,7 @@ from ffmpeg_tui.core.ffmpeg_manager import FFmpegManager
 
 from .tabs.compress_tab import CompressTab
 from .tabs.convert_tab import ConvertTab
+from .tabs.help_tab import HelpTab
 from .tabs.meta_tab import MetaTab
 from .tabs.settings_tab import SettingsTab
 from .worker import UpdateCheckWorker
@@ -158,8 +159,11 @@ QStatusBar {
 
 
 class MainWindow(QMainWindow):
-    def __init__(self) -> None:
+    def __init__(self, progress_callback=None) -> None:
         super().__init__()
+        self._report = progress_callback or (lambda v, m: None)
+
+        self._report(5, "初始化核心组件...")
         self._manager = FFmpegManager()
 
         self.setWindowTitle("FFmpeg Tools")
@@ -167,19 +171,28 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(_STYLESHEET)
 
         # Tabs
+        self._report(20, "创建格式转换...")
         self._tabs = QTabWidget()
         self._tabs.setElideMode(Qt.TextElideMode.ElideNone)
         self._tabs.setUsesScrollButtons(False)
 
         self._convert_tab = ConvertTab(self._manager)
+
+        self._report(40, "创建视频压缩...")
         self._compress_tab = CompressTab(self._manager)
+
+        self._report(55, "创建 Meta 专版...")
         self._meta_tab = MetaTab(self._manager)
+
+        self._report(70, "创建设置页面...")
         self._settings_tab = SettingsTab(self._manager)
+        self._help_tab = HelpTab()
 
         self._tabs.addTab(self._convert_tab, "格式转换")
         self._tabs.addTab(self._compress_tab, "视频压缩")
         self._tabs.addTab(self._meta_tab, "Meta 专版")
         self._tabs.addTab(self._settings_tab, "设置")
+        self._tabs.addTab(self._help_tab, "帮助")
 
         self.setCentralWidget(self._tabs)
 
@@ -191,9 +204,13 @@ class MainWindow(QMainWindow):
         self._settings_tab.ffmpeg_status_changed.connect(self._update_status)
         self._settings_tab.ffmpeg_status_changed.connect(self._update_tabs_state)
 
+        self._report(85, "检查 FFmpeg 状态...")
         self._update_status()
         self._update_tabs_state()
+
+        self._report(95, "检查更新...")
         self._silent_update_check()
+        self._report(100, "就绪")
 
     def _update_status(self) -> None:
         if self._manager.check_installation():

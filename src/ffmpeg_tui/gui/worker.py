@@ -103,17 +103,23 @@ class UpdateCheckWorker(QThread):
 
     Signals:
         finished(has_update, info)  — info is UpdateInfo or None (on error)
+        error(message)  — user-friendly error message
     """
 
     finished = pyqtSignal(bool, object)
+    error = pyqtSignal(str)
 
     def run(self) -> None:
-        from ffmpeg_tui.gui.updater import UpdateChecker, _parse_version
+        from ffmpeg_tui.gui.updater import UpdateChecker, UpdateCheckError, _parse_version
         from ffmpeg_tui import __version__
 
         try:
             info = UpdateChecker().check_update()
             has_update = _parse_version(info.latest_version) > _parse_version(__version__)
             self.finished.emit(has_update, info)
-        except Exception:
+        except UpdateCheckError as e:
+            self.error.emit(str(e))
+            self.finished.emit(False, None)
+        except Exception as e:
+            self.error.emit(f"检查更新时出错: {e}")
             self.finished.emit(False, None)

@@ -189,16 +189,18 @@ class SettingsTab(QWidget):
 
         self._update_worker = UpdateCheckWorker()
         self._update_worker.finished.connect(self._on_update_result)
+        self._update_worker.error.connect(self._on_update_error)
         self._update_worker.start()
 
     def _on_update_result(self, has_update: bool, info: object) -> None:
         self._check_update_btn.setEnabled(True)
 
         if info is None:
-            # Network error or parse failure
-            self._latest_ver_label.setText("-")
-            self._update_status_label.setText("检查失败，请稍后重试")
-            self._update_status_label.setStyleSheet("color: red;")
+            # Error already shown via _on_update_error
+            if not self._update_status_label.text().startswith("检查失败"):
+                self._latest_ver_label.setText("-")
+                self._update_status_label.setText("检查失败，请稍后重试")
+                self._update_status_label.setStyleSheet("color: red;")
         elif has_update:
             self._latest_ver_label.setText(info.latest_version)
             self._update_status_label.setText("发现新版本!")
@@ -212,6 +214,11 @@ class SettingsTab(QWidget):
             self._latest_ver_label.setText(__version__)
             self._update_status_label.setText("已是最新版本")
             self._update_status_label.setStyleSheet("color: green;")
+
+    def _on_update_error(self, message: str) -> None:
+        self._latest_ver_label.setText("-")
+        self._update_status_label.setText(f"检查失败: {message}")
+        self._update_status_label.setStyleSheet("color: red;")
 
     def _open_download_url(self) -> None:
         if self._download_url:

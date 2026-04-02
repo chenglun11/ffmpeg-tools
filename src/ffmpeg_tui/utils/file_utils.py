@@ -76,6 +76,83 @@ def get_file_info(path: Path, ffprobe_path: str = "ffprobe") -> dict:
         info["duration_formatted"] = format_duration(duration)
     return info
 
+def probe_media_streams(file_path: Path, ffprobe_path: str = "ffprobe") -> dict:
+    """使用 ffprobe 获取媒体文件的详细流信息。
+
+    Returns:
+        dict with keys: format_name, duration, bit_rate, size,
+        video (dict or None), audio (dict or None).
+    """
+    result_data: dict = {
+        "format_name": "",
+        "duration": 0.0,
+        "bit_rate": 0,
+        "size": 0,
+        "video": None,
+        "audio": None,
+    }
+    try:
+        result = subprocess.run(
+            [
+                ffprobe_path,
+                "-v", "quiet",
+                "-print_format", "json",
+                "-show_format",
+                "-show_streams",
+                str(file_path),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        if result.returncode != 0:
+            return result_data
+        data = json.loads(result.stdout)
+    except (json.JSONDecodeError, ValueError, FileNotFoundError, subprocess.TimeoutExpired):
+        return result_data
+
+    fmt = data.get("format", {})
+    result_data["format_name"] = fmt.get("format_long_name", fmt.get("format_name", ""))
+    result_data["duration"] = float(fmt.get("duration", 0))
+    result_data["bit_rate"] = int(fmt.get("bit_rate", 0))
+    result_data["size"] = int(fmt.get("size", 0))
+
+    for stream in data.get("streams", []):
+        codec_type = stream.get("codec_type")
+        if codec_type == "video" and result_data["video"] is None:
+            width = int(stream.get("width", 0))
+            height = int(stream.get("height", 0))
+            # Parse frame rate from r_frame_rate like "30/1" or "30000/1001"
+            fps = 0.0
+            r_fps = stream.get("r_frame_rate", "0/1")
+            try:
+                if "/" in r_fps:
+                    num, den = r_fps.split("/", 1)
+                    if int(den) > 0:
+                        fps = round(int(num) / int(den), 2)
+            except (ValueError, ZeroDivisionError):
+                fps = 0.0
+            result_data["video"] = {
+                "codec": stream.get("codec_long_name", stream.get("codec_name", "")),
+                "codec_short": stream.get("codec_name", ""),
+                "width": width,
+                "height": height,
+                "fps": fps,
+                "pix_fmt": stream.get("pix_fmt", ""),
+                "bit_rate": int(stream.get("bit_rate", 0)),
+            }
+        elif codec_type == "audio" and result_data["audio"] is None:
+            result_data["audio"] = {
+                "codec": stream.get("codec_long_name", stream.get("codec_name", "")),
+                "codec_short": stream.get("codec_name", ""),
+                "sample_rate": int(stream.get("sample_rate", 0)),
+                "channels": int(stream.get("channels", 0)),
+                "channel_layout": stream.get("channel_layout", ""),
+                "bit_rate": int(stream.get("bit_rate", 0)),
+            }
+    return result_data
+
+
 def generate_output_path(input_path: Path, output_format: str, suffix: str = "_converted") -> Path:
     """根据输入文件生成输出文件路径"""
     if not output_format.startswith("."):
