@@ -9,13 +9,30 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-env:
-  APP_VERSION: 0.4.1
-
 jobs:
+  version:
+    name: Resolve version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get.outputs.version }}
+    steps:
+    - uses: actions/checkout@v4
+    - id: get
+      shell: bash
+      run: |
+        if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+        else
+          v=$(grep -m1 '^version' pyproject.toml | sed 's/.*"\(.*\)".*/\1/')
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+        fi
+
   build-windows:
     name: Build Windows
+    needs: version
     runs-on: windows-latest
+    env:
+      APP_VERSION: ${{ needs.version.outputs.version }}
 
     steps:
     - name: Checkout code
@@ -55,7 +72,10 @@ jobs:
 
   build-macos:
     name: Build macOS
+    needs: version
     runs-on: macos-latest
+    env:
+      APP_VERSION: ${{ needs.version.outputs.version }}
 
     steps:
     - name: Checkout code
@@ -94,7 +114,10 @@ jobs:
 
   build-linux:
     name: Build Linux
+    needs: version
     runs-on: ubuntu-latest
+    env:
+      APP_VERSION: ${{ needs.version.outputs.version }}
 
     steps:
     - name: Checkout code
