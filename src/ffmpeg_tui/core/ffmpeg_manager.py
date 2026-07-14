@@ -20,6 +20,41 @@ _BIN_DIR = FFMPEG_DIR / "bin"
 _EXE_SUFFIX = ".exe" if platform.system() == "Windows" else ""
 
 
+def _get_bundled_ffmpeg_path() -> Optional[Path]:
+    """返回内置的 FFmpeg 二进制文件路径（如果存在）。"""
+    try:
+        # 确定当前平台
+        system = platform.system().lower()
+        machine = platform.machine().lower()
+
+        if system == "darwin":
+            platform_dir = "darwin-arm64" if machine == "arm64" else "darwin-x86_64"
+        elif system == "windows":
+            platform_dir = "win64"
+        elif system == "linux":
+            platform_dir = "linux-arm64" if machine == "aarch64" else "linux-x86_64"
+        else:
+            return None
+
+        # 获取资源目录（支持打包后的应用）
+        import sys
+        if getattr(sys, 'frozen', False):
+            # PyInstaller 打包后
+            base_path = Path(sys._MEIPASS)
+        else:
+            # 开发模式
+            base_path = Path(__file__).parent.parent
+
+        bundled_ffmpeg = base_path / "resources" / "ffmpeg" / platform_dir / f"ffmpeg{_EXE_SUFFIX}"
+
+        if bundled_ffmpeg.is_file():
+            return bundled_ffmpeg
+    except Exception:
+        pass
+
+    return None
+
+
 class FFmpegManager:
     """Manage FFmpeg detection, download, and installation."""
 
@@ -32,8 +67,17 @@ class FFmpegManager:
     # ------------------------------------------------------------------
 
     def check_installation(self) -> bool:
-        """Return True if a usable FFmpeg is found (local dir or system PATH)."""
-        # 1. Check local installation directory first
+        """Return True if a usable FFmpeg is found (bundled, local dir, or system PATH)."""
+        # 1. Check bundled FFmpeg first (内置版本优先)
+        bundled_ffmpeg = _get_bundled_ffmpeg_path()
+        if bundled_ffmpeg is not None and self.verify_installation(bundled_ffmpeg):
+            self._ffmpeg_path = bundled_ffmpeg
+            # 查找同目录下的 ffprobe
+            bundled_ffprobe = bundled_ffmpeg.parent / f"ffprobe{_EXE_SUFFIX}"
+            self._ffprobe_path = bundled_ffprobe if bundled_ffprobe.is_file() else None
+            return True
+
+        # 2. Check local installation directory
         local_ffmpeg = _BIN_DIR / f"ffmpeg{_EXE_SUFFIX}"
         local_ffprobe = _BIN_DIR / f"ffprobe{_EXE_SUFFIX}"
 
@@ -42,7 +86,7 @@ class FFmpegManager:
             self._ffprobe_path = local_ffprobe if local_ffprobe.is_file() else None
             return True
 
-        # 2. Check system PATH
+        # 3. Check system PATH
         sys_ffmpeg = shutil.which("ffmpeg")
         if sys_ffmpeg is not None:
             ffmpeg_path = Path(sys_ffmpeg)

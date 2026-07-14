@@ -123,3 +123,36 @@ class UpdateCheckWorker(QThread):
         except Exception as e:
             self.error.emit(f"检查更新时出错: {e}")
             self.finished.emit(False, None)
+
+
+class AutoInstallWorker(QThread):
+    """自动下载并安装 FFmpeg。
+
+    Signals:
+        progress(progress_int, message)  — 进度百分比和状态消息
+        finished(success, message)  — 安装结果和消息
+    """
+
+    progress = pyqtSignal(int, str)
+    finished = pyqtSignal(bool, str)
+
+    def run(self) -> None:
+        from ffmpeg_tui.core.ffmpeg_downloader import download_ffmpeg
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            success = loop.run_until_complete(
+                download_ffmpeg(progress_callback=self._on_progress)
+            )
+            if success:
+                self.finished.emit(True, "安装完成")
+            else:
+                self.finished.emit(False, "安装过程中发生未知错误")
+        except Exception as exc:
+            self.finished.emit(False, str(exc))
+        finally:
+            loop.close()
+
+    def _on_progress(self, progress: int, message: str) -> None:
+        self.progress.emit(progress, message)

@@ -216,7 +216,15 @@ class MainWindow(QMainWindow):
         if self._manager.check_installation():
             version = self._manager.get_version() or "unknown"
             first_line = version.split("\n")[0] if version else "unknown"
-            self._status_bar.showMessage(f"FFmpeg: {first_line}")
+
+            # 检查是否为内置版本
+            path = self._manager.get_ffmpeg_path()
+            is_bundled = path and "resources/ffmpeg" in str(path)
+
+            if is_bundled:
+                self._status_bar.showMessage(f"FFmpeg: {first_line} (内置)")
+            else:
+                self._status_bar.showMessage(f"FFmpeg: {first_line}")
         else:
             self._status_bar.showMessage("FFmpeg: 未安装 — 请前往设置页安装")
 

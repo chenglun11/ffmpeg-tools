@@ -51,7 +51,7 @@ class HelpTab(QWidget):
         # --- Quick start ---
         clayout.addWidget(self._section("快速开始"))
         clayout.addWidget(self._text(
-            "1. 确保 FFmpeg 已安装（可在「设置」页一键下载安装）\n"
+            "1. 确保 FFmpeg 已安装（已内置，开箱即用）\n"
             "2. 选择需要的功能页面（格式转换 / 视频压缩 / Meta 专版）\n"
             "3. 选择输入文件，配置参数，点击开始转换"
         ))
@@ -79,7 +79,9 @@ class HelpTab(QWidget):
 
         clayout.addWidget(self._subsection("设置"))
         clayout.addWidget(self._text(
-            "查看 FFmpeg 安装状态、一键下载安装 FFmpeg、检查软件更新。"
+            "查看 FFmpeg 安装状态、一键自动安装 FFmpeg、检查软件更新。\n\n"
+            "⚡ 新功能：点击「🚀 一键自动安装」按钮，程序会自动下载并安装 "
+            "FFmpeg，无需手动配置！"
         ))
 
         # --- FAQ ---
@@ -87,8 +89,9 @@ class HelpTab(QWidget):
 
         clayout.addWidget(self._subsection("提示「FFmpeg 未安装」怎么办？"))
         clayout.addWidget(self._text(
-            "前往「设置」页面，点击「下载安装 FFmpeg」按钮，程序会自动"
-            "下载并配置适合您系统的 FFmpeg。"
+            "前往「设置」页面，点击「🚀 一键自动安装」按钮，程序会自动"
+            "下载并配置适合您系统的 FFmpeg。整个过程只需 1-2 分钟。\n\n"
+            "或者，您也可以点击「手动下载安装」按钮，按照说明手动安装。"
         ))
 
         clayout.addWidget(self._subsection("转换按钮是灰色的无法点击？"))

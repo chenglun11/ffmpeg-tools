@@ -75,23 +75,53 @@ class FFmpegExecutor:
 
     @staticmethod
     def get_duration(input_file: Path, ffprobe_path: str = "ffprobe") -> float:
-        """使用 ffprobe 获取媒体文件时长（秒）。"""
+        """使用 ffprobe 获取媒体文件时长（秒）。
+
+        Returns:
+            文件时长（秒），失败时返回 0.0
+        """
         try:
+            # 确保路径存在
+            if not input_file.exists():
+                return 0.0
+
+            # Windows 路径处理：使用绝对路径并转换为字符串
+            file_path_str = str(input_file.absolute())
+
             result = subprocess.run(
                 [
                     ffprobe_path,
                     "-v", "quiet",
                     "-print_format", "json",
                     "-show_format",
-                    str(input_file),
+                    file_path_str,
                 ],
                 capture_output=True,
                 text=True,
                 timeout=10,
+                # Windows 上避免弹出控制台窗口
+                creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0,
             )
+
             if result.returncode == 0:
                 data = json.loads(result.stdout)
-                return float(data.get("format", {}).get("duration", 0))
-        except (json.JSONDecodeError, ValueError, FileNotFoundError, subprocess.TimeoutExpired):
+                duration = data.get("format", {}).get("duration", 0)
+                return float(duration) if duration else 0.0
+
+        except json.JSONDecodeError:
+            # JSON 解析失败
             pass
+        except (ValueError, TypeError):
+            # 数值转换失败
+            pass
+        except FileNotFoundError:
+            # ffprobe 不存在
+            pass
+        except subprocess.TimeoutExpired:
+            # 超时
+            pass
+        except Exception:
+            # 捕获所有其他异常，避免崩溃
+            pass
+
         return 0.0

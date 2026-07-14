@@ -20,7 +20,7 @@ from ffmpeg_tui import __version__
 from ffmpeg_tui.core.ffmpeg_manager import FFmpegManager
 from ffmpeg_tui.utils.file_utils import format_file_size
 
-from ..worker import DownloadWorker, UpdateCheckWorker
+from ..worker import DownloadWorker, UpdateCheckWorker, AutoInstallWorker
 
 
 class SettingsTab(QWidget):
@@ -60,9 +60,12 @@ class SettingsTab(QWidget):
         # Buttons
         btn_row = QHBoxLayout()
         self._detect_btn = QPushButton("重新检测")
-        self._download_btn = QPushButton("下载安装 FFmpeg")
-        self._download_btn.setObjectName("primaryBtn")
+        self._auto_install_btn = QPushButton("🚀 一键自动安装")
+        self._auto_install_btn.setObjectName("primaryBtn")
+        self._auto_install_btn.setToolTip("自动下载并安装最新版本的 FFmpeg")
+        self._download_btn = QPushButton("手动下载安装")
         btn_row.addWidget(self._detect_btn)
+        btn_row.addWidget(self._auto_install_btn)
         btn_row.addWidget(self._download_btn)
         btn_row.addStretch()
         layout.addLayout(btn_row)
@@ -112,35 +115,114 @@ class SettingsTab(QWidget):
 
         # Connections
         self._detect_btn.clicked.connect(self._refresh)
+        self._auto_install_btn.clicked.connect(self._auto_install)
         self._download_btn.clicked.connect(self._download)
         self._check_update_btn.clicked.connect(self._check_update)
         self._goto_download_btn.clicked.connect(self._open_download_url)
 
         self._download_url: str = ""
+        self._auto_install_worker: Optional[AutoInstallWorker] = None
         self._refresh()
 
     def _refresh(self) -> None:
         installed = self._manager.check_installation()
         if installed:
-            self._status_label.setText("已安装")
-            self._status_label.setStyleSheet("color: green; font-weight: bold;")
             path = self._manager.get_ffmpeg_path()
             path_str = str(path) if path else "-"
+
+            # 检查是否为内置版本
+            is_bundled = path and "resources/ffmpeg" in path_str
+
+            if is_bundled:
+                self._status_label.setText("已安装 (内置版本)")
+                self._status_label.setStyleSheet("color: #10b981; font-weight: bold;")
+            else:
+                self._status_label.setText("已安装")
+                self._status_label.setStyleSheet("color: green; font-weight: bold;")
+
             self._path_label.setText(path_str)
             self._path_label.setToolTip(path_str)
             version = self._manager.get_version() or "-"
             first_line = version.split("\n")[0].strip()
             self._version_label.setText(first_line)
             self._version_label.setToolTip(version)
-            self._download_btn.setEnabled(False)
+
+            # 内置版本隐藏安装按钮
+            if is_bundled:
+                self._auto_install_btn.hide()
+                self._download_btn.hide()
+            else:
+                self._auto_install_btn.setEnabled(False)
+                self._download_btn.setEnabled(False)
+                self._auto_install_btn.show()
+                self._download_btn.show()
         else:
             self._status_label.setText("未安装")
             self._status_label.setStyleSheet("color: red; font-weight: bold;")
             self._path_label.setText("-")
             self._version_label.setText("-")
+            self._auto_install_btn.setEnabled(True)
             self._download_btn.setEnabled(True)
+            self._auto_install_btn.show()
+            self._download_btn.show()
 
         self.ffmpeg_status_changed.emit()
+
+    def _auto_install(self) -> None:
+        """自动下载并安装 FFmpeg。"""
+        reply = QMessageBox.question(
+            self,
+            "自动安装 FFmpeg",
+            "将自动下载并安装最新版本的 FFmpeg (约 50-100 MB)。\n\n是否继续？",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes,
+        )
+
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        self._auto_install_btn.setEnabled(False)
+        self._download_btn.setEnabled(False)
+        self._detect_btn.setEnabled(False)
+        self._dl_progress.setValue(0)
+        self._dl_progress.show()
+        self._dl_status_label.setText("正在准备下载...")
+        self._dl_status_label.setStyleSheet("")
+        self._dl_status_label.show()
+
+        self._auto_install_worker = AutoInstallWorker()
+        self._auto_install_worker.progress.connect(self._on_auto_install_progress)
+        self._auto_install_worker.finished.connect(self._on_auto_install_finished)
+        self._auto_install_worker.start()
+
+    def _on_auto_install_progress(self, progress: int, message: str) -> None:
+        """自动安装进度回调。"""
+        self._dl_progress.setValue(progress)
+        self._dl_status_label.setText(message)
+
+    def _on_auto_install_finished(self, success: bool, message: str) -> None:
+        """自动安装完成回调。"""
+        self._detect_btn.setEnabled(True)
+        if success:
+            self._dl_status_label.setText("✅ 安装成功！")
+            self._dl_status_label.setStyleSheet("color: #10b981; font-weight: bold;")
+            self._dl_progress.setValue(100)
+            QMessageBox.information(
+                self,
+                "安装成功",
+                "FFmpeg 已成功安装！\n\n现在可以使用所有转换功能了。",
+            )
+            self._refresh()
+        else:
+            self._dl_status_label.setText(f"❌ 安装失败")
+            self._dl_status_label.setStyleSheet("color: #ef4444; font-weight: bold;")
+            self._auto_install_btn.setEnabled(True)
+            self._download_btn.setEnabled(True)
+            QMessageBox.critical(
+                self,
+                "安装失败",
+                f"自动安装失败：{message}\n\n请尝试手动下载安装，或检查网络连接。",
+            )
 
     def _download(self) -> None:
         self._download_btn.setEnabled(False)

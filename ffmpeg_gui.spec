@@ -6,11 +6,30 @@ import platform
 
 app_version = os.environ.get("APP_VERSION", "0.1.0")
 
+# 确定当前平台的 FFmpeg 资源目录
+system = platform.system().lower()
+machine = platform.machine().lower()
+
+if system == "darwin":
+    platform_dir = "darwin-arm64" if machine == "arm64" else "darwin-x86_64"
+elif system == "windows":
+    platform_dir = "win64"
+else:  # linux
+    platform_dir = "linux-arm64" if machine == "aarch64" else "linux-x86_64"
+
+# 内置 FFmpeg 二进制文件
+ffmpeg_resources = [
+    (
+        f"src/ffmpeg_tui/resources/ffmpeg/{platform_dir}",
+        f"ffmpeg_tui/resources/ffmpeg/{platform_dir}",
+    ),
+]
+
 a = Analysis(
     ["src/ffmpeg_tui/gui/__main__.py"],
     pathex=["src"],
     binaries=[],
-    datas=[],
+    datas=ffmpeg_resources,
     hiddenimports=[
         "ffmpeg_tui.core",
         "ffmpeg_tui.models",

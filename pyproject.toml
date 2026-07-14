@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ffmpeg-tui-tools"
-version = "0.3.0"
+version = "0.4.0"
 description = "A TUI tool for simplifying FFmpeg video/audio conversion"
 readme = "README.md"
 license = "MIT"
@@ -47,6 +47,15 @@ ffmpeg-gui = "ffmpeg_tui.gui:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+ffmpeg_tui = [
+    "resources/ffmpeg/darwin-arm64/*",
+    "resources/ffmpeg/darwin-x86_64/*",
+    "resources/ffmpeg/linux-x86_64/*",
+    "resources/ffmpeg/linux-arm64/*",
+    "resources/ffmpeg/win64/*",
+]
 
 [tool.black]
 line-length = 100

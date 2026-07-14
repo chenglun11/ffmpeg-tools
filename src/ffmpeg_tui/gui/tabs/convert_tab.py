@@ -81,27 +81,67 @@ class ConvertTab(QWidget):
         self._progress.cancel_clicked.connect(self._cancel)
 
     def _on_file_selected(self, path: Path) -> None:
-        valid, msg = validate_input_file(path)
-        if not valid:
+        """处理文件选择事件。
+
+        捕获所有异常避免崩溃，特别是 Windows 路径编码问题。
+        """
+        try:
+            # 验证文件
+            valid, msg = validate_input_file(path)
+            if not valid:
+                self._media_info.clear()
+                self._input_path = None
+                QMessageBox.warning(self, "文件无效", msg)
+                return
+
+            self._input_path = path
+
+            # 获取文件大小（可能因权限问题失败）
+            try:
+                size = path.stat().st_size
+            except (OSError, PermissionError):
+                size = 0
+
+            # 获取 ffprobe 路径
+            ffprobe = self._manager.get_ffprobe_path()
+            probe_str = str(ffprobe) if ffprobe else "ffprobe"
+
+            # 获取时长（可能失败，返回 0.0）
+            try:
+                self._duration = FFmpegExecutor.get_duration(path, probe_str)
+            except Exception:
+                self._duration = 0.0
+
+            # 探测媒体流（可能失败）
+            try:
+                probe = probe_media_streams(path, probe_str)
+                self._media_info.update_info(probe, file_size=size)
+            except Exception as e:
+                # 探测失败，显示基本信息
+                self._media_info.clear()
+                QMessageBox.warning(
+                    self,
+                    "媒体信息获取失败",
+                    f"无法读取文件媒体信息，但仍可尝试转换。\n\n错误: {str(e)}"
+                )
+
+            # 自动生成输出路径
+            try:
+                ext, _, _ = self._format_selector.selected_format()
+                if ext:
+                    self._output_edit.setText(str(generate_output_path(path, ext)))
+            except Exception:
+                pass
+
+        except Exception as e:
+            # 最外层兜底：捕获所有未预期的异常
             self._media_info.clear()
             self._input_path = None
-            QMessageBox.warning(self, "文件无效", msg)
-            return
-
-        self._input_path = path
-        size = path.stat().st_size
-
-        ffprobe = self._manager.get_ffprobe_path()
-        probe_str = str(ffprobe) if ffprobe else "ffprobe"
-        self._duration = FFmpegExecutor.get_duration(path, probe_str)
-
-        probe = probe_media_streams(path, probe_str)
-        self._media_info.update_info(probe, file_size=size)
-
-        # Auto-generate output path
-        ext, _, _ = self._format_selector.selected_format()
-        if ext:
-            self._output_edit.setText(str(generate_output_path(path, ext)))
+            QMessageBox.critical(
+                self,
+                "错误",
+                f"处理文件时发生错误:\n\n{str(e)}\n\n请尝试其他文件或联系开发者。"
+            )
 
     def _on_format_changed(self, ext: str, video_codec, audio_codec) -> None:
         if self._input_path and ext:

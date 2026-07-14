@@ -20,3 +20,6 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# FFmpeg 二进制文件（由 CI/CD 或本地脚本下载）
+src/ffmpeg_tui/resources/ffmpeg/
