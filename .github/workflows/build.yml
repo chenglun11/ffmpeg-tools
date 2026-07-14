@@ -32,10 +32,14 @@ jobs:
         pip install PyQt6 pyinstaller platformdirs httpx
 
     - name: Download FFmpeg binaries
-      run: python scripts/download_ffmpeg_binaries.py
+      run: |
+        python scripts/download_ffmpeg_binaries.py
+        echo "Checking downloaded files:"
+        dir src\ffmpeg_tui\resources\ffmpeg\ /s
+      shell: cmd
 
     - name: Build with PyInstaller
-      run: pyinstaller ffmpeg_gui.spec
+      run: pyinstaller ffmpeg_gui.spec --noconfirm
 
     - name: Package application
       run: |
@@ -68,14 +72,16 @@ jobs:
         pip install PyQt6 pyinstaller platformdirs httpx
 
     - name: Download FFmpeg binaries
-      run: python scripts/download_ffmpeg_binaries.py
+      run: |
+        python scripts/download_ffmpeg_binaries.py
+        echo "Checking downloaded files:"
+        ls -lR src/ffmpeg_tui/resources/ffmpeg/
 
     - name: Build with PyInstaller
-      run: pyinstaller ffmpeg_gui.spec
+      run: pyinstaller ffmpeg_gui.spec --noconfirm
 
     - name: Create DMG (optional)
       run: |
-        # 简单打包为 zip，或使用 create-dmg 工具创建 DMG
         cd dist
         zip -r FFmpegTools-${{ env.APP_VERSION }}-macOS.zip FFmpegTools.app
 
@@ -110,10 +116,13 @@ jobs:
         pip install PyQt6 pyinstaller platformdirs httpx
 
     - name: Download FFmpeg binaries
-      run: python scripts/download_ffmpeg_binaries.py
+      run: |
+        python scripts/download_ffmpeg_binaries.py
+        echo "Checking downloaded files:"
+        ls -lR src/ffmpeg_tui/resources/ffmpeg/
 
     - name: Build with PyInstaller
-      run: pyinstaller ffmpeg_gui.spec
+      run: pyinstaller ffmpeg_gui.spec --noconfirm
 
     - name: Package application
       run: |
