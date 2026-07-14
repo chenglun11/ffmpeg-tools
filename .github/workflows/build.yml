@@ -44,7 +44,7 @@ jobs:
     - name: Package application
       run: |
         cd dist
-        7z a -tzip FFmpegTools-${{ env.APP_VERSION }}-Windows.zip FFmpegTools/
+        7z a -tzip FFmpegTools-${{ env.APP_VERSION }}-Windows.zip FFmpegTools.exe
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -127,7 +127,7 @@ jobs:
     - name: Package application
       run: |
         cd dist
-        tar -czf FFmpegTools-${{ env.APP_VERSION }}-Linux.tar.gz FFmpegTools/
+        tar -czf FFmpegTools-${{ env.APP_VERSION }}-Linux.tar.gz FFmpegTools
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
