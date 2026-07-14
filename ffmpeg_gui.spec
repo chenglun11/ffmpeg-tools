@@ -17,10 +17,25 @@ elif system == "windows":
 else:  # linux
     platform_dir = "linux-arm64" if machine == "aarch64" else "linux-x86_64"
 
-# 内置 FFmpeg 二进制文件
+# 内置 FFmpeg 二进制文件（使用绝对路径并验证存在性）
+spec_dir = os.path.dirname(os.path.abspath(SPEC))
+ffmpeg_src_dir = os.path.join(spec_dir, "src", "ffmpeg_tui", "resources", "ffmpeg", platform_dir)
+
+# 验证 FFmpeg 文件存在
+ffmpeg_binary = "ffmpeg.exe" if system == "windows" else "ffmpeg"
+ffmpeg_binary_path = os.path.join(ffmpeg_src_dir, ffmpeg_binary)
+
+if not os.path.isfile(ffmpeg_binary_path):
+    raise FileNotFoundError(
+        f"FFmpeg 二进制文件不存在: {ffmpeg_binary_path}\n"
+        f"请先运行: python scripts/download_ffmpeg_binaries.py"
+    )
+
+print(f"✓ 找到 FFmpeg: {ffmpeg_binary_path} ({os.path.getsize(ffmpeg_binary_path) / 1024 / 1024:.1f} MB)")
+
 ffmpeg_resources = [
     (
-        f"src/ffmpeg_tui/resources/ffmpeg/{platform_dir}",
+        ffmpeg_src_dir,
         f"ffmpeg_tui/resources/ffmpeg/{platform_dir}",
     ),
 ]
