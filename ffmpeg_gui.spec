@@ -27,11 +27,11 @@ ffmpeg_binary_path = os.path.join(ffmpeg_src_dir, ffmpeg_binary)
 
 if not os.path.isfile(ffmpeg_binary_path):
     raise FileNotFoundError(
-        f"FFmpeg 二进制文件不存在: {ffmpeg_binary_path}\n"
-        f"请先运行: python scripts/download_ffmpeg_binaries.py"
+        f"FFmpeg binary not found: {ffmpeg_binary_path}\n"
+        f"Run first: python scripts/download_ffmpeg_binaries.py"
     )
 
-print(f"✓ 找到 FFmpeg: {ffmpeg_binary_path} ({os.path.getsize(ffmpeg_binary_path) / 1024 / 1024:.1f} MB)")
+print(f"[OK] Found FFmpeg: {ffmpeg_binary_path} ({os.path.getsize(ffmpeg_binary_path) / 1024 / 1024:.1f} MB)")
 
 ffmpeg_resources = [
     (
