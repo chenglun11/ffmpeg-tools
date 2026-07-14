@@ -18,6 +18,14 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
+# Windows 控制台默认 cp1252 编码，无法输出中文，强制切到 UTF-8
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 # 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent
 RESOURCES_DIR = PROJECT_ROOT / "src" / "ffmpeg_tui" / "resources" / "ffmpeg"
@@ -158,7 +166,7 @@ def download_platform(plat: str) -> None:
             archive_path.unlink(missing_ok=True)
 
     # 校验：至少要有 ffmpeg
-    exe_suffix = ".exe" if "win" in plat else ""
+    exe_suffix = ".exe" if plat.startswith("win") else ""
     ffmpeg_name = f"ffmpeg{exe_suffix}"
     if ffmpeg_name not in all_extracted:
         raise RuntimeError(f"{plat}: 未能提取 {ffmpeg_name}")
