@@ -5,22 +5,16 @@ import sys
 
 def main() -> None:
     """Launch the GUI application."""
+    import sys
     from PyQt6.QtWidgets import QApplication
-
     from .main_window import MainWindow
-    from .splash import SplashScreen
 
     app = QApplication(sys.argv)
     app.setApplicationName("FFmpeg Tools")
     app.setOrganizationName("ffmpeg-tui")
 
-    # Show splash screen immediately
-    splash = SplashScreen()
-    splash.show()
-    app.processEvents()
-
-    window = MainWindow(progress_callback=splash.set_progress)
+    # 直接创建主窗口，不使用 splash（打包环境下可能有问题）
+    window = MainWindow(progress_callback=None)
     window.show()
-    splash.finish(window)
 
     sys.exit(app.exec())

@@ -4,7 +4,17 @@
 import os
 import platform
 
+from PyInstaller.utils.hooks import collect_all
+
 app_version = os.environ.get("APP_VERSION", "0.1.0")
+
+# 彻底收集所有关键依赖（pydantic + PyQt6）
+_collected_datas, _collected_binaries, _collected_hiddenimports = [], [], []
+for _pkg in ("pydantic", "pydantic_core", "PyQt6"):
+    d, b, h = collect_all(_pkg)
+    _collected_datas += d
+    _collected_binaries += b
+    _collected_hiddenimports += h
 
 # 确定当前平台的 FFmpeg 资源目录
 system = platform.system().lower()
@@ -43,8 +53,8 @@ ffmpeg_resources = [
 a = Analysis(
     ["src/ffmpeg_tui/gui/__main__.py"],
     pathex=["src"],
-    binaries=[],
-    datas=ffmpeg_resources,
+    binaries=_collected_binaries,
+    datas=ffmpeg_resources + _collected_datas,
     hiddenimports=[
         "ffmpeg_tui.core",
         "ffmpeg_tui.models",
@@ -52,10 +62,7 @@ a = Analysis(
         "ffmpeg_tui.gui",
         "ffmpeg_tui.gui.tabs",
         "ffmpeg_tui.gui.widgets",
-        "pydantic",
-        "pydantic.dataclasses",
-        "pydantic_core",
-    ],
+    ] + _collected_hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -75,9 +82,8 @@ pyz = PYZ(a.pure)
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
-    a.datas,
     [],
+    exclude_binaries=True,
     name="FFmpegTools",
     debug=False,
     bootloader_ignore_signals=False,
@@ -87,10 +93,19 @@ exe = EXE(
     icon=None,
 )
 
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.datas,
+    strip=False,
+    upx=True,
+    name="FFmpegTools",
+)
+
 # macOS: create .app bundle
 if platform.system() == "Darwin":
     app = BUNDLE(
-        exe,
+        coll,
         name="FFmpegTools.app",
         icon=None,
         bundle_identifier="com.ffmpegTui.gui",

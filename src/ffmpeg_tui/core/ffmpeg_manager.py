@@ -39,18 +39,22 @@ def _get_bundled_ffmpeg_path() -> Optional[Path]:
         # 获取资源目录（支持打包后的应用）
         import sys
         if getattr(sys, 'frozen', False):
-            # PyInstaller 打包后
-            base_path = Path(sys._MEIPASS)
+            # PyInstaller 打包后 - _MEIPASS 下直接是 ffmpeg_tui/
+            base_path = Path(sys._MEIPASS) / "ffmpeg_tui"
+            print(f"[DEBUG] Frozen mode, looking in: {base_path}")
         else:
-            # 开发模式
+            # 开发模式 - 从当前文件向上找到 ffmpeg_tui/
             base_path = Path(__file__).parent.parent
+            print(f"[DEBUG] Dev mode, base_path: {base_path}")
 
         bundled_ffmpeg = base_path / "resources" / "ffmpeg" / platform_dir / f"ffmpeg{_EXE_SUFFIX}"
+        print(f"[DEBUG] Looking for bundled FFmpeg at: {bundled_ffmpeg}")
+        print(f"[DEBUG] File exists: {bundled_ffmpeg.is_file()}")
 
         if bundled_ffmpeg.is_file():
             return bundled_ffmpeg
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[DEBUG] Exception in _get_bundled_ffmpeg_path: {e}")
 
     return None
 

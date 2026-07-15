@@ -208,8 +208,9 @@ class MainWindow(QMainWindow):
         self._update_status()
         self._update_tabs_state()
 
-        self._report(95, "检查更新...")
-        self._silent_update_check()
+        # 暂时禁用自动更新检查（打包环境下可能阻塞）
+        # self._report(95, "检查更新...")
+        # self._silent_update_check()
         self._report(100, "就绪")
 
     def _update_status(self) -> None:
